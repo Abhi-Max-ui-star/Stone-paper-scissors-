@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rock Paper Scissors</title>
+  <style>
+    :root{
+      --bg: #f4f7fb;
+      --card:#fff;
+      --muted:#6b7280;
+      --accent:#2563eb;
+      --win:#16a34a;
+      --lose:#ef4444;
+      --tie:#f59e0b;
+      --shadow: 0 6px 18px rgba(16,24,40,0.08);
+      --glass: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;
+      background: linear-gradient(180deg,#eef2ff 0%, var(--bg) 100%);
+      padding:24px;
+      color:#0f172a;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:720px;
+      background:var(--card);
+      border-radius:12px;
+      padding:28px;
+      box-shadow:var(--shadow);
+      text-align:center;
+    }
+
+    h1{margin:0 0 6px;font-size:1.5rem;letter-spacing:0.6px}
+    h2{margin:0 0 18px;font-weight:600;color:var(--muted);font-size:1rem}
+
+    .choices{
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      margin:18px 0 8px;
+      flex-wrap:wrap;
+    }
+
+    .choice-btn{
+      border:0;
+      background:var(--glass);
+      padding:12px 18px;
+      border-radius:10px;
+      font-size:18px;
+      cursor:pointer;
+      min-width:120px;
+      transition:transform .12s ease, box-shadow .12s ease;
+      box-shadow: 0 4px 10px rgba(2,6,23,0.06);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .choice-btn:focus{outline:3px solid rgba(37,99,235,0.18); transform:translateY(-3px)}
+    .choice-btn:active{transform:translateY(1px)}
+    .choice-emoji{font-size:28px}
+    .choice-label{font-weight:600;color:var(--muted)}
+
+    .choice-btn.winner{border:2px solid rgba(22,163,74,0.12); box-shadow:0 6px 20px rgba(16,185,129,0.08)}
+    .choice-btn.loser{border:2px solid rgba(239,68,68,0.08)}
+    .choice-btn.tie{border:2px solid rgba(245,158,11,0.08)}
+
+    #result{
+      margin-top:16px;
+      font-size:18px;
+      min-height:64px;
+      padding:12px;
+      border-radius:8px;
+    }
+
+    .scoreboard{
+      display:flex;
+      gap:18px;
+      justify-content:center;
+      margin-top:18px;
+      flex-wrap:wrap;
+    }
+
+    .score{
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8));
+      padding:10px 14px;
+      border-radius:10px;
+      min-width:120px;
+      box-shadow:var(--shadow);
+      text-align:left;
+    }
+
+    .score b{display:block;font-size:20px}
+    .meta{font-size:13px;color:var(--muted);margin-top:6px}
+
+    #playAgain{
+      margin-top:18px;
+      padding:10px 18px;
+      font-size:16px;
+      border-radius:10px;
+      border:0;
+      cursor:pointer;
+      background:var(--accent);
+      color:white;
+    }
+
+    .small{font-size:13px;color:var(--muted);margin-top:8px}
+
+    /* subtle highlight animation for latest result */
+    .flash {
+      animation: flash-bg .7s ease;
+    }
+    @keyframes flash-bg{
+      0%{background:rgba(99,102,241,0.06)}
+      100%{background:transparent}
+    }
+
+    /* responsive */
+    @media (max-width:420px){
+      .choice-btn{min-width:100px;padding:10px 12px}
+      .score{min-width:90px}
+    }
+
+    /* visually-hidden for screen readers */
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-labelledby="title">
+    <h1 id="title">🎮 ROCK PAPER SCISSORS</h1>
+    <h2>🏆 First to 5 Wins! (Keyboard: 1=Rock, 2=Paper, 3=Scissors, R=Reset)</h2>
+
+    <div class="choices" id="choices" role="radiogroup" aria-label="Pick rock paper or scissors">
+      <button class="choice-btn" data-choice="rock" aria-pressed="false" title="Rock (1)">
+        <div class="choice-emoji">🪨</div>
+        <div class="choice-label">Rock</div>
+      </button>
+      <button class="choice-btn" data-choice="paper" aria-pressed="false" title="Paper (2)">
+        <div class="choice-emoji">📄</div>
+        <div class="choice-label">Paper</div>
+      </button>
+      <button class="choice-btn" data-choice="scissors" aria-pressed="false" title="Scissors (3)">
+        <div class="choice-emoji">✂️</div>
+        <div class="choice-label">Scissors</div>
+      </button>
+    </div>
+
+    <div id="result" aria-live="polite" aria-atomic="true"></div>
+    <div class="scoreboard" aria-hidden="false">
+      <div class="score" id="playerBox">
+        <b>👤 <span id="playerScore">0</span></b>
+        <div class="meta">Player</div>
+      </div>
+      <div class="score" id="computerBox">
+        <b>🤖 <span id="computerScore">0</span></b>
+        <div class="meta">Computer</div>
+      </div>
+      <div class="score" id="tiesBox">
+        <b>🤝 <span id="ties">0</span></b>
+        <div class="meta">Ties</div>
+      </div>
+      <div class="score" id="streakBox">
+        <b>🔥 <span id="streak">0</span></b>
+        <div class="meta">Current Win Streak</div>
+      </div>
+      <div class="score" id="bestBox">
+        <b>⭐ <span id="bestStreak">0</span></b>
+        <div class="meta">Best Streak (persistent)</div>
+      </div>
+    </div>
+
+    <div>
+      <button id="playAgain" style="display:none">🔄 Play Again</button>
+    </div>
+
+    <p class="small">Tip: Use 1 / 2 / 3 or click the buttons. Press R to reset anytime.</p>
+
+    <!-- screen-reader only live region for concise updates -->
+    <div id="srResult" class="sr-only" aria-live="polite"></div>
+  </div>
+
+  <script>
+    (function(){
+      // state
+      let playerScore = 0;
+      let computerScore = 0;
+      let ties = 0;
+      let streak = 0;
+      const winningTarget = 5;
+
+      // elements
+      const choiceButtons = Array.from(document.querySelectorAll('.choice-btn'));
+      const resultEl = document.getElementById('result');
+      const srResult = document.getElementById('srResult');
+      const playerScoreEl = document.getElementById('playerScore');
+      const computerScoreEl = document.getElementById('computerScore');
+      const tiesEl = document.getElementById('ties');
+      const streakEl = document.getElementById('streak');
+      const bestStreakEl = document.getElementById('bestStreak');
+      const playAgainBtn = document.getElementById('playAgain');
+
+      const choices = ["rock","paper","scissors"];
+      const emojis = {rock:"🪨", paper:"📄", scissors:"✂️"};
+      const wins = { rock: "scissors", paper: "rock", scissors: "paper" };
+      const winMessages = [
+        "🔥 Awesome move!",
+        "🎯 Great choice!",
+        "🚀 You crushed it!",
+        "😎 Nice win!",
+        "🏆 Well played!"
+      ];
+
+      // persistent best streak
+      function loadBest() {
+        const val = parseInt(localStorage.getItem('rps_best_streak') || '0', 10);
+        bestStreakEl.textContent = Math.max(0, val);
+      }
+      function saveBestIfNeeded() {
+        const currentBest = parseInt(localStorage.getItem('rps_best_streak') || '0', 10);
+        if (streak > currentBest) {
+          localStorage.setItem('rps_best_streak', String(streak));
+          bestStreakEl.textContent = streak;
+        }
+      }
+
+      // helpers
+      function randomChoice(){
+        return choices[Math.floor(Math.random()*choices.length)];
+      }
+
+      function updateScoreUI(){
+        playerScoreEl.textContent = playerScore;
+        computerScoreEl.textContent = computerScore;
+        tiesEl.textContent = ties;
+        streakEl.textContent = streak;
+      }
+
+      function setButtonsDisabled(disabled){
+        choiceButtons.forEach(btn=>{
+          btn.disabled = disabled;
+          btn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        });
+      }
+
+      function clearChoiceHighlights(){
+        choiceButtons.forEach(b => b.classList.remove('winner','loser','tie','flash'));
+      }
+
+      function announce(text){
+        // visible result
+        resultEl.innerHTML = text;
+        // short SR text as well
+        srResult.textContent = text.replace(/<[^>]+>/g, '');
+        // visual flash
+        resultEl.classList.add('flash');
+        setTimeout(()=> resultEl.classList.remove('flash'),700);
+      }
+
+      function finalizeIfChampion(){
+        if (playerScore === winningTarget || computerScore === winningTarget) {
+          const champion = playerScore > computerScore
+            ? "🏆 CONGRATULATIONS! YOU ARE THE CHAMPION!"
+            : "🤖 COMPUTER IS THE CHAMPION!";
+          announce(resultEl.innerHTML + '<br><br><strong>' + champion + '</strong>');
+          setButtonsDisabled(true);
+          playAgainBtn.style.display = 'inline-block';
+        }
+      }
+
+      function playRound(playerChoice){
+        if (playerScore >= winningTarget || computerScore >= winningTarget) return;
+
+        const computerChoice = randomChoice();
+
+        let message = '';
+        // handle tie
+        if (playerChoice === computerChoice) {
+          ties++;
+          message = '🤝 It\'s a TIE!';
+          // styling
+          choiceButtons.find(b=>b.dataset.choice===playerChoice)?.classList.add('tie');
+        }
+        // player wins
+        else if (wins[playerChoice] === computerChoice){
+          playerScore++;
+          streak++;
+          const randomMessage = winMessages[Math.floor(Math.random()*winMessages.length)];
+          message = `🎉 YOU WIN! ${randomMessage}`;
+          choiceButtons.find(b=>b.dataset.choice===playerChoice)?.classList.add('winner');
+          choiceButtons.find(b=>b.dataset.choice===computerChoice)?.classList.add('loser');
+          saveBestIfNeeded();
+        }
+        // computer wins
+        else {
+          computerScore++;
+          streak = 0;
+          message = '🤖 COMPUTER WINS!';
+          choiceButtons.find(b=>b.dataset.choice===playerChoice)?.classList.add('loser');
+          choiceButtons.find(b=>b.dataset.choice===computerChoice)?.classList.add('winner');
+        }
+
+        // show result (safe small HTML)
+        const resultHtml =
+          `👤 You chose: ${emojis[playerChoice]} ${playerChoice}<br>
+           🤖 Computer chose: ${emojis[computerChoice]} ${computerChoice}<br><br>
+           ${message}`;
+        announce(resultHtml);
+
+        updateScoreUI();
+        finalizeIfChampion();
+      }
+
+      // attach events
+      choiceButtons.forEach((btn, i) => {
+        btn.addEventListener('click', (e)=>{
+          clearChoiceHighlights();
+          // set aria-pressed properly for radiogroup semantics
+          choiceButtons.forEach(b=>b.setAttribute('aria-pressed','false'));
+          btn.setAttribute('aria-pressed','true');
+          const choice = btn.dataset.choice;
+          playRound(choice);
+        });
+
+        // keyboard focus/enter behavior is native for button
+      });
+
+      // keyboard shortcuts: 1=rock, 2=paper, 3=scissors, R resets
+      document.addEventListener('keydown', (e) => {
+        // ignore when typing into form elements (none here) but keep check
+        const tag = (e.target && e.target.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+        if (e.key === '1') chooseByIndex(0);
+        if (e.key === '2') chooseByIndex(1);
+        if (e.key === '3') chooseByIndex(2);
+        if (e.key.toLowerCase() === 'r') {
+          e.preventDefault();
+          resetGame();
+        }
+      });
+
+      function chooseByIndex(idx){
+        const btn = choiceButtons[idx];
+        if (!btn || btn.disabled) return;
+        btn.focus();
+        btn.click();
+      }
+
+      // reset
+      function resetGame(){
+        playerScore = 0;
+        computerScore = 0;
+        ties = 0;
+        streak = 0;
+        updateScoreUI();
+        clearChoiceHighlights();
+        resultEl.innerHTML = '';
+        srResult.textContent = '';
+        playAgainBtn.style.display = 'none';
+        setButtonsDisabled(false);
+        // reset aria-pressed
+        choiceButtons.forEach(b=>b.setAttribute('aria-pressed','false'));
+      }
+
+      playAgainBtn.addEventListener('click', ()=>{
+        resetGame();
+        choiceButtons[0].focus();
+      });
+
+      // initialize
+      loadBest();
+      updateScoreUI();
+
+      // expose reset globally for convenience in dev console (optional)
+      window.resetGame = resetGame;
+
+      // small accessibility: focus first button on load
+      window.addEventListener('load', ()=> choiceButtons[0].focus());
+    })();
+  </script>
+</body>
+</html>
